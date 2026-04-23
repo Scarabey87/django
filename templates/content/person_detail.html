@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ person.name }} - Все видео{% endblock %}
+
+{% block content %}
+<!-- Шапка человека -->
+<div class="person-header">
+    <img src="{{ person.photo.url }}" alt="{{ person.name }}" class="header-photo">
+    <div class="header-info">
+        <h1>{{ person.name }}</h1>
+        <span class="category-badge">{{ person.category }}</span>
+        <p>{{ person.description }}</p>
+        <div class="person-stats">
+            <span>📹 Видео: {{ person.video_count }}</span>
+            <span>👁 Всего просмотров: {{ person.total_views }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Заголовок раздела видео -->
+<div class="videos-section-title">
+    <h2>🎬 Все видео</h2>
+    <p>Нажмите на любое видео для просмотра</p>
+</div>
+
+<!-- Сетка видео - все видео готовы к просмотру -->
+<div class="video-grid original-format">
+    {% for video in videos %}
+    <div class="card video-card original" onclick="location.href='{% url 'video_player' video.pk %}'">
+        <div class="thumbnail-wrapper">
+            <div class="video-thumbnail" style="background-image: url('{{ video.thumbnail.url }}');">
+                <div class="play-icon">▶</div>
+            </div>
+            {% if video.access_level == 'L2' %}
+            <span class="vip-badge">VIP</span>
+            {% endif %}
+        </div>
+        <div class="card-content">
+            <h4>{{ video.title }}</h4>
+            <p class="video-meta">
+                <span>👁 {{ video.views }} просмотров</span>
+                <span>📅 {{ video.created_at|date:"d.m.Y" }}</span>
+            </p>
+        </div>
+    </div>
+    {% empty %}
+    <div class="no-videos">
+        <p>😔 У этого человека пока нет видео</p>
+        <p style="font-size: 0.9rem; opacity: 0.7; margin-top: 10px;">
+            Загляните позже или выберите другого человека
+        </p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Кнопка назад -->
+<div class="back-to-home">
+    <a href="{% url 'home' %}" class="back-btn-large">
+        ← Вернуться к списку людей
+    </a>
+</div>
+{% endblock %}

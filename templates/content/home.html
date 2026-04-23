@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - AI Оживление{% endblock %}
+
+{% block content %}
+<div class="top-widgets-container">
+    <div class="donation-message">
+        <div class="donation-content">
+            <p class="donation-text">
+                {{ donation_title|default:"Поддержать проект" }}:
+                <span class="card-number-donation">{{ donation_card|default:"4100119509404270" }}</span>
+            </p>
+            <!-- ✅ ПРЯМАЯ ПОДСТАНОВКА: {{ donation_amount }}р — доступ на {{ donation_days }} дней -->
+            <p class="donation-subtext">{{ donation_amount }}р — доступ на {{ donation_days }} дней</p>
+            
+            <div style="margin-top: 2px;">
+                <a href="{{ yoomoney_link|default:'https://yoomoney.ru/to/4100119509404270' }}" target="_blank" class="btn-donate">💳 Перевести</a>
+            </div>
+            
+            <div style="margin-top: 2px;">{{ yoomoney_iframe|safe }}</div>
+        </div>
+    </div>
+
+    <div class="widget-poll">
+        <h3>🎯 {{ poll_question|default:"Предложите теги для оживления" }}</h3>
+        <form class="poll-form" id="pollForm" method="post" action="{% url "submit_poll" %}">
+            {% csrf_token %}
+            <input type="hidden" name="question" value="{{ poll_question|default:'Предложите теги для оживления' }}">
+            <div class="input-wrapper">
+                <input type="text" name="tag" class="poll-input" id="pollInput" placeholder="Ваш тег..." required>
+                <button type="submit" class="poll-btn">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/>
+                    </svg>
+                </button>
+            </div>
+        </form>
+        <div id="pollMessage" class="poll-message"></div>
+    </div>
+</div>
+
+<div class="sorting-container">
+    <div class="sorting-controls">
+        <span class="sorting-label">⚙️ Сортировка:</span>
+        <select id="sortSelect" class="sort-select" onchange="sortPeople()">
+            <option value="default">По умолчанию</option>
+            <option value="name-asc">По имени (А-Я)</option>
+            <option value="name-desc">По имени (Я-А)</option>
+            <option value="videos">По количеству видео</option>
+            <option value="views">По просмотрам</option>
+        </select>
+        <span class="sorting-label" style="margin-left: 20px;">🔍 Поиск:</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Найти человека..." onkeyup="searchPeople()">
+    </div>
+    <div class="results-count">Найдено: <span id="resultsCount">{{ people.count }}</span></div>
+</div>
+
+<div class="people-grid" id="peopleGrid">
+    {% for person in people %}
+    {% if person.video_count > 0 %}
+    <div class="card person-card" data-id="{{ person.pk }}" data-name="{{ person.name|lower }}" data-videos="{{ person.video_count }}" data-views="{{ person.total_views }}">
+        <a href="{% url "person_all_videos" person.pk %}" class="card-link"></a>
+        <div class="card-image" style="background-image: url('{{ person.photo.url }}');">
+            <div class="card-overlay">
+                <div class="overlay-stats">
+                    <p>📹 Видео: {{ person.video_count }}</p>
+                    <p>👁 Просмотры: {{ person.total_views }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-content">
+            <h3>{{ person.name }}</h3>
+            <p class="description">{{ person.description|truncatechars:80 }}</p>
+            <button class="btn-watch"><span>▶ Смотреть все видео</span></button>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+function sortPeople() {
+    const sortSelect = document.getElementById('sortSelect');
+    const grid = document.getElementById('peopleGrid');
+    if (!sortSelect || !grid) return;
+    const sortValue = sortSelect.value;
+    const cards = Array.from(grid.querySelectorAll('.person-card'));
+    cards.sort((a, b) => {
+        switch(sortValue) {
+            case 'name-asc': return a.dataset.name.localeCompare(b.dataset.name, 'ru');
+            case 'name-desc': return b.dataset.name.localeCompare(a.dataset.name, 'ru');
+            case 'videos': return parseInt(b.dataset.videos) - parseInt(a.dataset.videos);
+            case 'views': return parseInt(b.dataset.views) - parseInt(a.dataset.views);
+            default: return 0;
+        }
+    });
+    cards.forEach(card => grid.appendChild(card));
+}
+
+function searchPeople() {
+    const searchInput = document.getElementById('searchInput');
+    const resultsCount = document.getElementById('resultsCount');
+    if (!searchInput) return;
+    const searchTerm = searchInput.value.toLowerCase();
+    const cards = document.querySelectorAll('.person-card');
+    let visibleCount = 0;
+    cards.forEach(card => {
+        const name = card.dataset.name;
+        if (name.includes(searchTerm)) { card.classList.remove('hidden'); visibleCount++; }
+        else { card.classList.add('hidden'); }
+    });
+    if (resultsCount) resultsCount.textContent = visibleCount;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const pollForm = document.getElementById('pollForm');
+    const pollMessage = document.getElementById('pollMessage');
+    const currentQuestion = document.querySelector('input[name="question"]')?.value || 'Предложите теги для оживления';
+    
+    if (pollForm) {
+        const cookieName = getPollCookieName();
+        if (document.cookie.split(';').some(c => c.trim().startsWith(cookieName + '='))) {
+            pollMessage.textContent = 'ℹ️ Вы уже голосовали в этой сессии';
+            pollMessage.className = 'poll-message';
+            pollForm.querySelector('button[type="submit"]').disabled = true;
+            return;
+        }
+        
+        pollForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(pollForm);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            
+            if (!csrfToken) {
+                pollMessage.textContent = '❌ Ошибка CSRF';
+                pollMessage.className = 'poll-message error';
+                return;
+            }
+            
+            try {
+                const response = await fetch('{% url "submit_poll" %}', {
+                    method: 'POST',
+                    headers: { 
+                        'X-CSRFToken': csrfToken.value,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (pollMessage) {
+                    pollMessage.textContent = data.message || data.error;
+                    pollMessage.className = `poll-message ${data.status === 'success' ? 'success' : 'error'}`;
+                    
+                    if (data.status === 'success') {
+                        pollForm.reset();
+                        document.cookie = cookieName + '=voted; max-age=86400; path=/; SameSite=Lax';
+                        pollForm.querySelector('button[type="submit"]').disabled = true;
+                    }
+                    setTimeout(() => { pollMessage.textContent = ''; pollMessage.className = 'poll-message'; }, 5000);
+                }
+            } catch (error) {
+                console.error('Ошибка опроса:', error);
+                if (pollMessage) {
+                    pollMessage.textContent = '❌ Ошибка сети. Проверьте подключение.';
+                    pollMessage.className = 'poll-message error';
+                }
+            }
+        });
+    }
+    
+    function getPollCookieName() {
+        let hash = 0;
+        const str = currentQuestion;
+        for (let i = 0; i < str.length; i++) {
+            hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            hash = hash & hash;
+        }
+        return 'poll_voted_' + Math.abs(hash).toString(16).slice(0, 8);
+    }
+});
+</script>
+{% endblock %}
