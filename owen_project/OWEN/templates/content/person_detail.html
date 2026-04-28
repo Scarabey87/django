@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="person-header">
+    <img src="{{ person.photo.url }}" alt="{{ person.name }}" class="header-photo">
+    <div class="header-info">
+        <h1>{{ person.name }}</h1>
+        <p>{{ person.description }}</p>
+    </div>
+</div>
+
+<div class="video-grid">
+    {% for video in videos %}
+    <div class="card video-card">
+        <div class="thumbnail-container" style="background-image: url('{{ video.thumbnail.url }}');">
+            {% if video.access_level == 'L2' and not user.is_vip %}
+            <div class="lock-overlay">
+                <span>🔒 VIP</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="card-content">
+            <h4>{{ video.title }}</h4>
+            <p>👁 {{ video.views }}</p>
+            <a href="{% url 'video_player' video.pk %}" class="btn-play">▶ Смотреть</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
