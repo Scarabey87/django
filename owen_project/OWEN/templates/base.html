@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Оживление{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-ubuntu">
+    <nav class="navbar">
+        <div class="logo-container">
+            <div class="logo shimmer">✨ AI оживление фото ✨</div>
+            {% if user.is_authenticated and user.is_vip %}
+            <div class="vip-timer" id="vip-timer">VIP: --:--:--</div>
+            {% endif %}
+        </div>
+        
+        <div class="nav-links">
+            <a href="{% url 'home' %}">Главная</a>
+            {% if user.is_authenticated %}
+                <span class="user-greeting">Привет, {{ user.username }}</span>
+                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">Выход</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Вход</a>
+                <a href="{% url 'register' %}">Регистрация</a>
+            {% endif %}
+        </div>
+
+        <div class="theme-switcher">
+            <button onclick="setTheme('theme-ubuntu')" class="theme-btn ubuntu" title="Ubuntu">U</button>
+            <button onclick="setTheme('theme-aubergine')" class="theme-btn aubergine" title="Aubergine">A</button>
+            <button onclick="setTheme('theme-warm')" class="theme-btn warm" title="Warm">W</button>
+            <button onclick="setTheme('theme-ocean')" class="theme-btn ocean" title="Ocean">O</button>
+            <button onclick="setTheme('theme-forest')" class="theme-btn forest" title="Forest">F</button>
+            <button onclick="setTheme('theme-midnight')" class="theme-btn midnight" title="Midnight">M</button>
+        </div>
+    </nav>
+
+    <div class="main-layout">
+        <!-- Левый рекламный блок -->
+        <aside class="ad-sidebar left">
+            {% for ad in left_ads %}
+            <div class="ad-block">
+                {% if ad.link_url %}
+                <a href="{{ ad.link_url }}" target="_blank" class="ad-link">
+                {% endif %}
+                    {% if ad.html_content %}
+                        {{ ad.html_content|safe }}
+                    {% elif ad.image %}
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="ad-image">
+                    {% else %}
+                        <div class="ad-placeholder"></div>
+                    {% endif %}
+                {% if ad.link_url %}
+                </a>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="ad-block">
+                <div class="ad-placeholder"></div>
+            </div>
+            {% endfor %}
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Правый рекламный блок -->
+        <aside class="ad-sidebar right">
+            {% for ad in right_ads %}
+            <div class="ad-block">
+                {% if ad.link_url %}
+                <a href="{{ ad.link_url }}" target="_blank" class="ad-link">
+                {% endif %}
+                    {% if ad.html_content %}
+                        {{ ad.html_content|safe }}
+                    {% elif ad.image %}
+                        <img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="ad-image">
+                    {% else %}
+                        <div class="ad-placeholder"></div>
+                    {% endif %}
+                {% if ad.link_url %}
+                </a>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="ad-block">
+                <div class="ad-placeholder"></div>
+            </div>
+            {% endfor %}
+        </aside>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 AI Video Platform. Ubuntu + iPhone Style.</p>
+        <p>Контакты: <a href="mailto:Infijium@gmail.com">Infijium@gmail.com</a></p>
+    </footer>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'theme-ubuntu';
+            setTheme(savedTheme);
+            
+            {% if user.is_authenticated and user.vip_expires_at %}
+            startVipTimer("{{ user.vip_expires_at|date:'c' }}");
+            {% endif %}
+        });
+    </script>
+</body>
+</html>

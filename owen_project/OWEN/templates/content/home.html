@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - AI Оживление{% endblock %}
+
+{% block content %}
+<!-- Донат и виджет опроса в одном ряду -->
+<div class="top-widgets-container">
+    <!-- Сообщение о поддержке проекта -->
+    <div class="donation-message">
+        <div class="donation-content">
+            <span class="donation-icon">💝</span>
+            <p class="donation-text">
+                Поддержать проект:
+                <span class="card-number-donation">0000-0000-0000-0000</span>
+            </p>
+            <p class="donation-subtext">
+                В сообщении укажите ваш Логин
+            </p>
+        </div>
+    </div>
+
+    <!-- Виджет опроса -->
+    <div class="widget-poll">
+        <h3>🎯 Теги для оживления</h3>
+        <form class="poll-form" method="post">
+            {% csrf_token %}
+            <div class="input-wrapper">
+                <input type="text" name="tag" class="poll-input" placeholder="Ваш тег..." required>
+                <button type="submit" class="poll-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"/>
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Сортировка карточек -->
+<div class="sorting-container">
+    <div class="sorting-controls">
+        <span class="sorting-label"> Сортировка:</span>
+        <select id="sortSelect" class="sort-select" onchange="sortPeople()">
+            <option value="default">По умолчанию</option>
+            <option value="name-asc">По имени (А-Я)</option>
+            <option value="name-desc">По имени (Я-А)</option>
+            <option value="videos">По количеству видео</option>
+            <option value="views">По просмотрам</option>
+            <option value="category">По категории</option>
+        </select>
+        
+        <span class="sorting-label" style="margin-left: 20px;">🔍 Поиск:</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Найти человека..." onkeyup="searchPeople()">
+    </div>
+    
+    <div class="results-count">
+        Найдено: <span id="resultsCount">{{ people.count }}</span>
+    </div>
+</div>
+
+<!-- Сетка карточек людей -->
+<div class="people-grid" id="peopleGrid">
+    {% for person in people %}
+    <div class="card person-card" data-name="{{ person.name|lower }}" data-category="{{ person.category|lower }}" data-videos="{{ person.video_count }}" data-views="{{ person.total_views }}" onclick="location.href='{% url 'person_detail' person.pk %}'">
+        <div class="card-image" style="background-image: url('{{ person.photo.url }}');">
+            <div class="card-overlay">
+                <div class="overlay-stats">
+                    <p>📹 Видео: {{ person.video_count }}</p>
+                    <p>👁 Просмотры: {{ person.total_views }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-content">
+            <h3>{{ person.name }}</h3>
+            <span class="category">{{ person.category }}</span>
+            <p class="description">{{ person.description|truncatechars:80 }}</p>
+            <button class="btn-watch">
+                <span>▶ Смотреть</span>
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Панель управления</h1>
+<div class="stats-grid">
+    <div class="stat-box">Пользователей: {{ stats.users_count }}</div>
+    <div class="stat-box">Людей: {{ stats.people_count }}</div>
+    <div class="stat-box">Видео: {{ stats.videos_count }}</div>
+    <div class="stat-box">Просмотров: {{ stats.total_views }}</div>
+</div>
+
+<h2>Управление пользователями</h2>
+<table>
+    <tr><th>Имя</th><th>Email</th><th>Статус</th><th>Действия</th></tr>
+    {% for u in users %}
+    <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.is_vip|yesno:"VIP,Обычный" }}</td>
+        <td>
+            <button onclick="setUserLevel({{ u.id }}, 'L2', 24)">VIP 24ч</button>
+            <button onclick="setUserLevel({{ u.id }}, 'L1', 0)">Снять VIP</button>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Коды доступа</h2>
+<form id="codeForm">
+    {% csrf_token %}
+    <input type="text" id="newCode" placeholder="Код (мин 6 символов)">
+    <button type="button" onclick="createCode()">Создать</button>
+</form>
+<ul>
+    {% for code in codes %}
+    <li>{{ code.code }} ({{ code.duration_hours }}ч) - {% if code.is_active %}Активен{% else %}Неактивен{% endif %}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

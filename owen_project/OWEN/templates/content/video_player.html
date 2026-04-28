@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="video-player-container">
+    <h2>{{ video.title }} ({{ video.person.name }})</h2>
+    
+    {% if can_watch %}
+    <video controls autoplay class="main-video">
+        <source src="{{ video.video_file.url }}" type="video/mp4">
+        Ваш браузер не поддерживает видео.
+    </video>
+    <p>{{ video.description }}</p>
+    {% else %}
+    <div class="blocked-content">
+        <div class="blur-effect" style="background-image: url('{{ video.thumbnail.url }}');"></div>
+        <div class="access-modal">
+            <h3>Доступ ограничен</h3>
+            <p>{{ blocked_reason }}</p>
+            <button class="btn-buy" onclick="showPaymentModal()">Получить доступ</button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Модальное окно оплаты -->
+<div id="paymentModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span class="close" onclick="closePaymentModal()">&times;</span>
+        <h2>Оплата VIP доступа</h2>
+        <p>Переведите сумму на карту:</p>
+        <div class="card-number">2200 2479 6561 4242</div>
+        <p>В назначении платежа укажите ваш логин: <strong>{{ user.username }}</strong></p>
+        <p>Вам придет код активации на почту: <strong>Infijium@gmail.com</strong></p>
+        
+        <form action="{% url 'activate_code' %}" method="post" class="activate-form">
+            {% csrf_token %}
+            <input type="text" name="code" placeholder="Введите код" required>
+            <button type="submit">Активировать</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
