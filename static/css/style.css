@@ -471,7 +471,7 @@ a:hover { color: var(--secondary-color); text-decoration: underline; }
     display: block;
     background: #000;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
-    object-fit: cover;
+    object-fit: contain;
 }
 .player-wrapper.no-download {
     background: #000;
@@ -497,7 +497,7 @@ a:hover { color: var(--secondary-color); text-decoration: underline; }
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     opacity: 0;
     display: none;
     /* ✅ Blur applied via JS on hover: blur(35px) - reduced by 30% */
