@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель администратора{% endblock %}
+
+{% block content %}
+<div class="dashboard-container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <h1 style="margin-bottom: 30px;">📊 Панель администратора</h1>
+    
+    <!-- ✅ СТАТИСТИКА ПОСЕЩЕНИЙ И ПРОСМОТРОВ -->
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div style="font-size: 2rem;">👥</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ stats.total_users }}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Всего пользователей</div>
+        </div>
+        <div class="stat-box">
+            <div style="font-size: 2rem;">🟢</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ stats.active_users }}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Активных за 7 дней</div>
+        </div>
+        <div class="stat-box">
+            <div style="font-size: 2rem;">👁</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ stats.total_views|default:0 }}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Просмотров видео</div>
+        </div>
+        <div class="stat-box">
+            <div style="font-size: 2rem;">🔒</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ stats.vip_videos }}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">VIP видео</div>
+        </div>
+        <div class="stat-box">
+            <div style="font-size: 2rem;">🚶</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ stats.visits_total|default:0 }}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Посещений (7 дней)</div>
+        </div>
+        <div class="stat-box">
+            <div style="font-size: 2rem;">👤</div>
+            <div style="font-size: 1.5rem; font-weight: bold;">{{ stats.visits_unique_users|default:0 }}</div>
+            <div style="font-size: 0.9rem; opacity: 0.8;">Уникальных пользователей</div>
+        </div>
+    </div>
+    
+    <!-- ✅ ГРАФИК ПОСЕЩЕНИЙ ПО ДНЯМ -->
+    {% if stats.visits_daily %}
+    <div style="margin-top: 30px; background: var(--card-bg); padding: 20px; border-radius: var(--radius-lg);">
+        <h3 style="margin-bottom: 15px;">📈 Посещения по дням</h3>
+        <div style="display: flex; align-items: flex-end; gap: 8px; height: 150px;">
+            {% for day in stats.visits_daily %}
+            <div style="display: flex; flex-direction: column; align-items: center; flex: 1;">
+                <div style="width: 100%; background: var(--primary-color); border-radius: 4px 4px 0 0; 
+                            height: {{ day.count|floatformat:0|add:10 }}%; 
+                            min-height: 10px; transition: height 0.3s;" 
+                     title="{{ day.date }}: {{ day.count }} посещений">
+                </div>
+                <div style="font-size: 0.7rem; margin-top: 5px; transform: rotate(-45deg); transform-origin: left;">
+                    {{ day.date|slice:"5:" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ✅ ПОПУЛЯРНЫЕ СТРАНИЦЫ -->
+    {% if stats.popular_pages %}
+    <div style="margin-top: 30px; background: var(--card-bg); padding: 20px; border-radius: var(--radius-lg);">
+        <h3 style="margin-bottom: 15px;">🔥 Популярные страницы</h3>
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Страница</th>
+                    <th>Посещения</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for page in stats.popular_pages %}
+                <tr>
+                    <td>{{ page.page }}</td>
+                    <td style="text-align: center; font-weight: bold;">{{ page.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- ✅ ТОП ВИДЕО ПО ПРОСМОТРАМ -->
+    {% if stats.top_videos %}
+    <div style="margin-top: 30px; background: var(--card-bg); padding: 20px; border-radius: var(--radius-lg);">
+        <h3 style="margin-bottom: 15px;">🎬 Топ видео по просмотрам</h3>
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Видео</th>
+                    <th>Персона</th>
+                    <th>Просмотры</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for video in stats.top_videos %}
+                <tr>
+                    <td>{{ video.title }}</td>
+                    <td>{{ video.person.name }}</td>
+                    <td style="text-align: center; font-weight: bold;">{{ video.views }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <!-- ✅ УПРАВЛЕНИЕ -->
+    <div style="margin-top: 30px;">
+        <h3 style="margin-bottom: 15px;">⚙️ Управление</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <a href="/admin/content/person/" class="btn-primary" style="padding: 10px 20px; text-decoration: none;">👥 Люди</a>
+            <a href="/admin/content/video/" class="btn-primary" style="padding: 10px 20px; text-decoration: none;">🎬 Видео</a>
+            <a href="/admin/content/accesscode/" class="btn-primary" style="padding: 10px 20px; text-decoration: none;">🔑 Коды доступа</a>
+            <a href="/admin/accounts/user/" class="btn-primary" style="padding: 10px 20px; text-decoration: none;">👤 Пользователи</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

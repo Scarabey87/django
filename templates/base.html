@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="yandex-verification" content="4aa2b656a750f8ab" />
+    <title>{% block title %}AI Оживление{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="theme-ubuntu">
+    
+    <div id="ageVerificationModal" class="modal" style="display:none; z-index: 9999;">
+        <div class="modal-content">
+            <h2>⚠️ Внимание: Контент 18+</h2>
+            <p>Этот сайт содержит контент, предназначенный только для лиц старше 18 лет.</p>
+            <p style="margin: 20px 0; font-weight: bold;">Вам есть 18 лет?</p>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                <input type="checkbox" id="ageConfirm" style="width: 20px; height: 20px;">
+                <label for="ageConfirm">Да, мне есть 18 лет</label>
+            </div>
+            <button id="ageConfirmBtn" class="btn-primary" disabled>Подтвердить и войти</button>
+        </div>
+    </div>
+    
+    <div id="mainContent" style="display: none;">
+        <nav class="navbar">
+            <div class="logo-container">
+                <!-- ✅ ИСПРАВЛЕН ЛОГОТИП -->
+                <div class="logo shimmer">✨ AI оживление фото 18+✨</div>
+                {% if user.is_authenticated and user.is_vip and user.vip_expires_at %}
+                <div class="vip-timer" id="vip-timer">VIP: --:--:--</div>
+                {% endif %}
+            </div>
+            
+            <div class="nav-links">
+                <a href="{% url 'home' %}">Главная</a>
+                {% if user.is_authenticated %}
+                    <span class="user-greeting">
+                        👤 {{ user.username }}
+                        {% if user.is_vip and user.vip_expires_at %}
+                        <span class="vip-timer-inline" id="vip-timer-inline">⏳ --:--:--</span>
+                        {% endif %}
+                    </span>
+                    <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-logout">Выход</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">Вход</a>
+                    <a href="{% url 'register' %}">Регистрация</a>
+                {% endif %}
+            </div>
+
+            <div class="theme-switcher">
+                <button onclick="setTheme('theme-ubuntu')" class="theme-btn ubuntu" title="Ubuntu">U</button>
+                <button onclick="setTheme('theme-aubergine')" class="theme-btn aubergine" title="Aubergine">A</button>
+                <button onclick="setTheme('theme-warm')" class="theme-btn warm" title="Warm">W</button>
+                <button onclick="setTheme('theme-ocean')" class="theme-btn ocean" title="Ocean">O</button>
+                <button onclick="setTheme('theme-black')" class="theme-btn black" title="Black">B</button>
+                <button onclick="setTheme('theme-midnight')" class="theme-btn midnight" title="Midnight">M</button>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="ad-sidebar left">
+                {% for ad in left_ads %}
+                <div class="ad-block">
+                    {% if ad.link_url %}<a href="{{ ad.link_url }}" target="_blank" class="ad-link">{% endif %}
+                        {% if ad.html_content %}{{ ad.html_content|safe }}
+                        {% elif ad.image %}<img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="ad-image">
+                        {% else %}<div class="ad-placeholder"></div>{% endif %}
+                    {% if ad.link_url %}</a>{% endif %}
+                </div>
+                {% empty %}
+                <div class="ad-block"><div class="ad-placeholder"></div></div>
+                {% endfor %}
+            </aside>
+
+            <main class="container">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                {% block content %}{% endblock %}
+            </main>
+
+            <aside class="ad-sidebar right">
+                {% for ad in right_ads %}
+                <div class="ad-block">
+                    {% if ad.link_url %}<a href="{{ ad.link_url }}" target="_blank" class="ad-link">{% endif %}
+                        {% if ad.html_content %}{{ ad.html_content|safe }}
+                        {% elif ad.image %}<img src="{{ ad.image.url }}" alt="{{ ad.title }}" class="ad-image">
+                        {% else %}<div class="ad-placeholder"></div>{% endif %}
+                    {% if ad.link_url %}</a>{% endif %}
+                </div>
+                {% empty %}
+                <div class="ad-block"><div class="ad-placeholder"></div></div>
+                {% endfor %}
+            </aside>
+        </div>
+
+        <!-- ✅ ИСПРАВЛЕН ФУТЕР -->
+        <footer>
+            <p>caravagio2323@gmail.com</p>
+        </footer>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    <script>
+        function setTheme(themeName) {
+            document.body.className = themeName;
+            localStorage.setItem('theme', themeName);
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const ageModal = document.getElementById('ageVerificationModal');
+            const mainContent = document.getElementById('mainContent');
+            const ageConfirm = document.getElementById('ageConfirm');
+            const ageConfirmBtn = document.getElementById('ageConfirmBtn');
+            
+            if (document.cookie.includes('age_verified=true')) {
+                ageModal.style.display = 'none';
+                mainContent.style.display = 'block';
+            } else {
+                ageModal.style.display = 'flex';
+                mainContent.style.display = 'none';
+            }
+            
+            if (ageConfirm && ageConfirmBtn) {
+                ageConfirm.addEventListener('change', function() { ageConfirmBtn.disabled = !this.checked; });
+                ageConfirmBtn.addEventListener('click', function() {
+                    if (ageConfirm.checked) {
+                        const expiryDate = new Date();
+                        expiryDate.setDate(expiryDate.getDate() + 30);
+                        document.cookie = `age_verified=true; expires=${expiryDate.toUTCString()}; path=/; SameSite=Lax`;
+                        ageModal.style.display = 'none';
+                        mainContent.style.display = 'block';
+                    }
+                });
+            }
+            
+            {% if user.is_authenticated and user.is_vip and user.vip_expires_at %}
+            const vipExpires = "{{ user.vip_expires_at|date:'c' }}";
+            startVipTimer(vipExpires);
+            {% endif %}
+            
+            {% if user.is_authenticated %}
+            let lastVipStatus = {{ user.is_vip|lower }};
+            setInterval(async function() {
+                try {
+                    const response = await fetch('/api/check-vip-status/');
+                    const data = await response.json();
+                    if (data.needs_reload === true) {
+                        showVipExpiredNotification();
+                        setTimeout(() => location.reload(), 2000);
+                        return;
+                    }
+                    if (data.is_vip !== lastVipStatus) {
+                        showVipChangeNotification(data.is_vip);
+                        lastVipStatus = data.is_vip;
+                        if (data.is_vip && data.vip_expires_at) startVipTimer(data.vip_expires_at);
+                    }
+                } catch (error) { console.error('Error checking VIP status:', error); }
+            }, 60000);
+            {% endif %}
+            
+            document.querySelectorAll('video').forEach(video => {
+                video.addEventListener('play', function() {
+                    document.querySelectorAll('video').forEach(v => { if (v !== this && !v.paused) v.pause(); });
+                });
+                video.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && ['s', 'p', 'u', 'c'].includes(e.key.toLowerCase())) {
+                    if (!document.activeElement.closest('video')) { e.preventDefault(); return false; }
+                }
+            });
+            
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) setTheme(savedTheme);
+        });
+        
+        function startVipTimer(expiryDateStr) {
+            const timerElement = document.getElementById('vip-timer');
+            const timerElementInline = document.getElementById('vip-timer-inline');
+            if (!timerElement && !timerElementInline) return;
+            const expiryDate = new Date(expiryDateStr);
+            const interval = setInterval(() => {
+                const now = new Date();
+                const distance = expiryDate - now;
+                if (distance < 0) {
+                    clearInterval(interval);
+                    if (timerElement) timerElement.innerHTML = '⏰ ИСТЕК';
+                    if (timerElementInline) timerElementInline.innerHTML = '⏰ ИСТЕК';
+                    setTimeout(() => location.reload(), 2000);
+                    return;
+                }
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                const timeString = `⏳ ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+                if (timerElement) timerElement.innerHTML = timeString;
+                if (timerElementInline) timerElementInline.innerHTML = timeString;
+            }, 1000);
+        }
+        
+        function showVipExpiredNotification() {
+            const notification = document.createElement('div');
+            notification.className = 'vip-change-notification';
+            notification.style.cssText = `position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 20px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: 600; z-index: 10000; box-shadow: 0 4px 30px rgba(0,0,0,0.3); animation: slideDown 0.5s ease;`;
+            notification.innerHTML = '❌ VIP доступ истёк! Страница обновляется...';
+            document.body.appendChild(notification);
+            setTimeout(() => { notification.style.animation = 'slideUp 0.5s ease'; setTimeout(() => notification.remove(), 500); }, 2000);
+        }
+        
+        function showVipChangeNotification(isVip) {
+            const notification = document.createElement('div');
+            notification.className = 'vip-change-notification';
+            notification.style.cssText = `position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: ${isVip ? 'linear-gradient(135deg, #28a745, #20c997)' : 'linear-gradient(135deg, #dc3545, #c82333)'}; color: white; padding: 20px 40px; border-radius: 50px; font-size: 1.1rem; font-weight: 600; z-index: 10000; box-shadow: 0 4px 30px rgba(0,0,0,0.3); animation: slideDown 0.5s ease;`;
+            notification.innerHTML = isVip ? '✅ VIP доступ активирован!' : '❌ VIP доступ истёк!';
+            document.body.appendChild(notification);
+            setTimeout(() => { notification.style.animation = 'slideUp 0.5s ease'; setTimeout(() => notification.remove(), 500); }, 2000);
+        }
+    </script>
+</body>
+</html>
